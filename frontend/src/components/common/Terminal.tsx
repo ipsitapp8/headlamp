@@ -288,6 +288,7 @@ export default function Terminal(props: TerminalProps) {
           rows: 30, // initial rows before fit
           windowsMode: isWindows,
           allowProposedApi: true,
+          fontFamily: 'monospace',
         }),
         connected: false,
         reconnectOnEnter: false,

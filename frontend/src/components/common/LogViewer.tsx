@@ -101,6 +101,7 @@ export function LogViewer(props: LogViewerProps) {
       rows: 30, // initial rows before fit
       lineHeight: 1.21,
       allowProposedApi: true,
+      fontFamily: 'monospace',
     });
 
     if (!!outXtermRef) {
