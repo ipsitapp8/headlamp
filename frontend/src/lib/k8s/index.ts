@@ -107,6 +107,8 @@ export const ResourceClasses = {
   GRPCRoute,
 };
 
+export { useKubeList, useKubeGet, useKubeApiList, useKubeApiGet } from './KubeObject';
+
 /** Hook for getting or fetching the clusters configuration.
  * This gets the clusters from the redux store. The redux store is updated
  * when the user changes the configuration. The configuration is stored in
