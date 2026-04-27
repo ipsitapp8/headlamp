@@ -21,6 +21,7 @@ import Switch from '@mui/material/Switch';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router';
+import { useKubeList } from '../../lib/k8s';
 import Event from '../../lib/k8s/event';
 import Node from '../../lib/k8s/node';
 import Pod from '../../lib/k8s/pod';
@@ -46,8 +47,8 @@ import { ClusterGroupErrorMessage } from './ClusterGroupErrorMessage';
 
 export default function Overview() {
   const { t } = useTranslation(['translation']);
-  const [pods] = Pod.useList();
-  const [nodes] = Node.useList();
+  const [pods] = useKubeList(Pod);
+  const [nodes] = useKubeList(Node);
   const [nodeMetrics, metricsError] = Node.useMetrics();
   const chartProcessors = useTypedSelector(state => state.overviewCharts.processors);
 
@@ -119,7 +120,7 @@ function EventsSection() {
     )
   );
   const namespace = useNamespaces();
-  const { items: events, errors: eventsErrors } = Event.useList({
+  const { items: events, errors: eventsErrors } = useKubeList(Event, {
     limit: Event.maxLimit,
     namespace,
   });

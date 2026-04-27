@@ -16,6 +16,7 @@
 
 import React from 'react';
 import { useTranslation } from 'react-i18next';
+import { useKubeList } from '../../lib/k8s';
 import ClusterRoleBinding from '../../lib/k8s/clusterRoleBinding';
 import RoleBinding from '../../lib/k8s/roleBinding';
 import { useNamespaces } from '../../redux/filterSlice';
@@ -43,10 +44,10 @@ function RoleLink(props: { role: string; namespace?: string; cluster: string }) 
 
 export default function RoleBindingList() {
   const { t } = useTranslation(['glossary', 'translation']);
-  const { items: roles, errors: roleErrors } = RoleBinding.useList({
+  const { items: roles, errors: roleErrors } = useKubeList(RoleBinding, {
     namespace: useNamespaces(),
   });
-  const { items: clusterRoles, errors: clusterRoleErrors } = ClusterRoleBinding.useList();
+  const { items: clusterRoles, errors: clusterRoleErrors } = useKubeList(ClusterRoleBinding);
 
   const allRoles = React.useMemo(() => {
     if (roles === null && clusterRoles === null) {

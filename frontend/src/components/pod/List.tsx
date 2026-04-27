@@ -19,6 +19,7 @@ import Box from '@mui/material/Box';
 import Fade from '@mui/material/Fade';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
+import { useKubeList } from '../../lib/k8s';
 import { ApiError } from '../../lib/k8s/api/v2/ApiError';
 import { KubeContainerStatus } from '../../lib/k8s/cluster';
 import Pod from '../../lib/k8s/pod';
@@ -501,8 +502,8 @@ export function PodListRenderer(props: PodListProps) {
 }
 
 export default function PodList() {
-  const { items, errors } = Pod.useList({ namespace: useNamespaces() });
-  const { items: podMetrics } = PodMetrics.useList({
+  const { items, errors } = useKubeList(Pod, { namespace: useNamespaces() });
+  const { items: podMetrics } = useKubeList(PodMetrics, {
     namespace: useNamespaces(),
     refetchInterval: METRIC_REFETCH_INTERVAL_MS,
   });

@@ -17,6 +17,7 @@
 import _ from 'lodash';
 import React, { useMemo } from 'react';
 import { ResourceClasses } from '.';
+import { useKubeList } from './';
 import { request } from './api/v1/clusterRequests';
 import type { QueryParameters } from './api/v1/queryParameters';
 import type { ApiError } from './api/v2/ApiError';
@@ -210,7 +211,7 @@ class Event extends KubeObject<KubeEvent> {
     // Calling hooks in a loop is usually forbidden
     // But if we make sure that clusters don't change between renders it's fine
     // eslint-disable-next-line react-hooks/rules-of-hooks
-    const queries = Event.useList({
+    const queries = useKubeList(Event, {
       clusters: clusterNames,
       ...options.queryParams,
     });

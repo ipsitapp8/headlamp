@@ -18,6 +18,7 @@ import { JSONPath } from 'jsonpath-plus';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams } from 'react-router-dom';
+import { useKubeGet } from '../../lib/k8s';
 import CustomResourceDefinition, { KubeCRD } from '../../lib/k8s/crd';
 import { localeDate } from '../../lib/util';
 import Empty from '../common/EmptyContent';
@@ -50,7 +51,7 @@ export function CustomResourceDetails({
   cluster,
 }: CustomResourceDetailsProps) {
   const { t } = useTranslation('glossary');
-  const [crd, error] = CustomResourceDefinition.useGet(crdName, undefined, { cluster });
+  const [crd, error] = useKubeGet(CustomResourceDefinition, crdName, undefined, { cluster });
 
   const namespace = ns === '-' ? undefined : ns;
 
@@ -137,7 +138,7 @@ function CustomResourceDetailsRenderer(props: CustomResourceDetailsRendererProps
   const { t } = useTranslation('glossary');
 
   const CRClass = React.useMemo(() => crd.makeCRClass(), [crd]);
-  const [item, error] = CRClass.useGet(crName, namespace, { cluster });
+  const [item, error] = useKubeGet(CRClass, crName, namespace, { cluster });
 
   const apiVersion = item?.jsonData.apiVersion?.split('/')[1] || '';
   const extraColumns: AdditionalPrinterColumns = getExtraColumns(crd, apiVersion) || [];

@@ -15,6 +15,7 @@
  */
 
 import { useMemo } from 'react';
+import { useKubeList } from '../../../../lib/k8s';
 import BackendTLSPolicy from '../../../../lib/k8s/backendTLSPolicy';
 import BackendTrafficPolicy from '../../../../lib/k8s/backendTrafficPolicy';
 import ConfigMap from '../../../../lib/k8s/configMap';
@@ -227,7 +228,7 @@ const repliaceSetToOwner = makeOwnerRelation(ReplicaSet);
 
 const useGetCRToOwnerRelations = () => {
   const namespace = useNamespaces();
-  const { items: crds } = CustomResourceDefinition.useList({ namespace });
+  const { items: crds } = useKubeList(CustomResourceDefinition, { namespace });
 
   return useMemo(() => {
     if (!crds) return [];

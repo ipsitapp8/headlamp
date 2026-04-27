@@ -35,7 +35,7 @@ import { Dispatch, FormEvent, SetStateAction, useMemo, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { Trans, useTranslation } from 'react-i18next';
 import { Redirect, useHistory } from 'react-router';
-import { useClustersConf } from '../../lib/k8s';
+import { useClustersConf, useKubeList } from '../../lib/k8s';
 import { apply } from '../../lib/k8s/api/v1/apply';
 import { ApiError } from '../../lib/k8s/api/v2/ApiError';
 import { KubeObjectInterface } from '../../lib/k8s/KubeObject';
@@ -124,7 +124,7 @@ export function CreateNew() {
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const { items: allProjectNamespaces } = Namespace.useList({
+  const { items: allProjectNamespaces } = useKubeList(Namespace, {
     clusters: allClusters ? Object.keys(allClusters) : [],
     labelSelector: PROJECT_ID_LABEL,
   });

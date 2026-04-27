@@ -20,7 +20,7 @@ import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { getClusterAppearanceFromMeta } from '../../helpers/clusterAppearance';
 import { isElectron } from '../../helpers/isElectron';
-import { useClustersConf, useSelectedClusters } from '../../lib/k8s';
+import { useClustersConf, useKubeList,useSelectedClusters } from '../../lib/k8s';
 import CRD from '../../lib/k8s/crd';
 import { createRouteURL } from '../../lib/router/createRouteURL';
 import { useTypedSelector } from '../../redux/hooks';
@@ -63,7 +63,7 @@ export const useSidebarItems = (sidebarName: string = DefaultSidebars.IN_CLUSTER
   const { t } = useTranslation();
   const theme = useTheme();
 
-  const [crds, error] = CRD.useList();
+  const [crds, error] = useKubeList(CRD);
   if (error !== null) {
     console.error('Failed to fetch CRDs:', error);
   }

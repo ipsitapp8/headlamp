@@ -17,6 +17,7 @@
 import { FormControlLabel, Switch } from '@mui/material';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
+import { useKubeList } from '../../lib/k8s';
 import Secret from '../../lib/k8s/secret';
 import { useNamespaces } from '../../redux/filterSlice';
 import { CreateResourceButton } from '../common';
@@ -31,7 +32,7 @@ export default function SecretList() {
     JSON.parse(storedHideHelm || SECRET_LIST_HELM_SECRET_HIDE_DEFAULT.toString())
   );
 
-  const [secrets, error] = Secret.useList({ namespace: useNamespaces() });
+  const [secrets, error] = useKubeList(Secret, { namespace: useNamespaces() });
 
   const filteredSecrets = React.useMemo(() => {
     if (!secrets) {

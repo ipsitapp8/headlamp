@@ -37,6 +37,7 @@ import {
 } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch } from 'react-redux';
+import { useKubeList } from '../../lib/k8s';
 import Namespace from '../../lib/k8s/namespace';
 import K8sNode from '../../lib/k8s/node';
 import { setNamespaceFilter } from '../../redux/filterSlice';
@@ -191,8 +192,8 @@ function GraphViewContent({
   }, [nodes, edges, hasErrorsFilter, namespaces, defaultFilters]);
 
   // Group the graph
-  const [allNamespaces] = Namespace.useList();
-  const [allNodes] = K8sNode.useList();
+  const [allNamespaces] = useKubeList(Namespace);
+  const [allNodes] = useKubeList(K8sNode);
   const { visibleGraph, fullGraph } = useMemo(() => {
     const graph = groupGraph(filteredGraph.nodes, filteredGraph.edges, {
       groupBy,

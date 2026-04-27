@@ -40,6 +40,7 @@ import Pod from '../../../lib/k8s/pod';
 import Service from '../../../lib/k8s/service';
 import ActionButton from '../ActionButton';
 export { type PortForward as PortForwardState } from '../../../lib/k8s/api/v1/portForward';
+import { useKubeList } from '../../../lib/k8s';
 import PortForwardStartDialog from '../../portforward/PortForwardStartDialog';
 
 interface PortForwardKubeObjectProps {
@@ -118,7 +119,7 @@ function PortForwardContent(props: PortForwardProps) {
 
   const { t } = useTranslation(['translation', 'resource']);
 
-  const [pods, podsFetchError] = Pod.useList({
+  const [pods, podsFetchError] = useKubeList(Pod, {
     namespace,
     labelSelector: getPodsSelectorFilter(service),
   });

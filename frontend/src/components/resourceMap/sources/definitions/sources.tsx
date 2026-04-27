@@ -16,7 +16,7 @@
 
 import { Icon } from '@iconify/react';
 import React, { useMemo } from 'react';
-import { useCluster } from '../../../../lib/k8s';
+import { useCluster, useKubeList } from '../../../../lib/k8s';
 import BackendTLSPolicy from '../../../../lib/k8s/backendTLSPolicy';
 import BackendTrafficPolicy from '../../../../lib/k8s/backendTrafficPolicy';
 import ConfigMap from '../../../../lib/k8s/configMap';
@@ -85,7 +85,7 @@ const makeKubeSource = (cl: KubeObjectClass): GraphSource => ({
   label: cl.apiName,
   icon: <KubeIcon kind={cl.kind as any} />,
   useData() {
-    const [items] = cl.useList({ namespace: useNamespaces() });
+    const [items] = useKubeList(cl, { namespace: useNamespaces() });
 
     return useMemo(() => (items ? { nodes: items?.map(makeKubeObjectNode) } : null), [items]);
   },
@@ -126,7 +126,7 @@ const generateCRSources = (crds: CRD[], vpaEnabled: boolean): GraphSource[] => {
 };
 
 export function useGetAllSources(): GraphSource[] {
-  const { items: CustomResourceDefinition } = CRD.useList({ namespace: useNamespaces() });
+  const { items: CustomResourceDefinition } = useKubeList(CRD, { namespace: useNamespaces() });
   const cluster = useCluster();
   const [vpaEnabled, setVpaEnabled] = React.useState(false);
 

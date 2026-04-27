@@ -18,6 +18,7 @@ import Alert from '@mui/material/Alert';
 import AlertTitle from '@mui/material/AlertTitle';
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useKubeList } from '../../lib/k8s';
 import CRD from '../../lib/k8s/crd';
 import { KubeObject } from '../../lib/k8s/KubeObject';
 import { useNamespaces } from '../../redux/filterSlice';
@@ -29,7 +30,7 @@ function CrInstancesView({ crds }: { crds: CRD[]; key: string }) {
   const dataClassCrds = crds.map(crd => {
     const crdClass = crd.makeCRClass();
     // eslint-disable-next-line react-hooks/rules-of-hooks
-    const data = crdClass.useList({ cluster: crd.cluster, namespace: useNamespaces() });
+    const data = useKubeList(crdClass, { cluster: crd.cluster, namespace: useNamespaces() });
     return { data, crdClass, crd };
   });
 
@@ -160,7 +161,7 @@ export function CrInstanceList() {
     items: crds,
     error: crdsError,
     isLoading: isLoadingCRDs,
-  } = CRD.useList({ namespace: useNamespaces() });
+  } = useKubeList(CRD, { namespace: useNamespaces() });
 
   if (crdsError) {
     return (

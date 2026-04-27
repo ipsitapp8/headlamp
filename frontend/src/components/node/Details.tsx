@@ -24,6 +24,7 @@ import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch } from 'react-redux';
 import { useParams } from 'react-router-dom';
+import { useKubeGet,useKubeList } from '../../lib/k8s';
 import { apply } from '../../lib/k8s/api/v1/apply';
 import { drainNode, drainNodeStatus } from '../../lib/k8s/api/v1/drainNode';
 import type { ApiError } from '../../lib/k8s/api/v2/ApiError';
@@ -76,8 +77,8 @@ export default function NodeDetails(props: { name?: string; cluster?: string }) 
   const [nodeSummaryStats, nodeSummaryError] = Node.useNodeSummaryStats(name, cluster);
   const [isupdatingNodeScheduleProperty, setisUpdatingNodeScheduleProperty] = React.useState(false);
   const [isNodeDrainInProgress, setisNodeDrainInProgress] = React.useState(false);
-  const [nodeFromAPI, nodeError] = Node.useGet(name);
-  const { items: nodePods } = Pod.useList({
+  const [nodeFromAPI, nodeError] = useKubeGet(Node, name);
+  const { items: nodePods } = useKubeList(Pod, {
     fieldSelector: name
       ? `spec.nodeName=${name},status.phase!=Succeeded,status.phase!=Failed`
       : undefined,

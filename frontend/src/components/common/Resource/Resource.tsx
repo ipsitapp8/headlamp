@@ -36,7 +36,13 @@ import React, { PropsWithChildren, ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { generatePath, NavLinkProps, useLocation } from 'react-router-dom';
 import YAML from 'yaml';
-import { labelSelectorToQuery, ResourceClasses, useCluster } from '../../../lib/k8s';
+import {
+  labelSelectorToQuery,
+  ResourceClasses,
+  useCluster,
+  useKubeGet,
+  useKubeList,
+} from '../../../lib/k8s';
 import { ApiError } from '../../../lib/k8s/api/v2/ApiError';
 import { KubeCondition, KubeContainer, KubeContainerStatus } from '../../../lib/k8s/cluster';
 import ConfigMap from '../../../lib/k8s/configMap';
@@ -160,7 +166,7 @@ export function DetailsGrid<T extends KubeObjectClass>(props: DetailsGridProps<T
   const { extraInfo, actions, noDefaultActions, headerStyle, backLink, title, headerSection } =
     otherMainInfoSectionProps;
 
-  const [item, error] = resourceType.useGet(name, namespace, {
+  const [item, error] = useKubeGet(resourceType, name, namespace, {
     cluster: cluster ?? selectedCluster ?? undefined,
   }) as [InstanceType<T> | null, ApiError | null];
   const prevItemRef = React.useRef<{ uid?: string; version?: string; error?: ApiError | null }>({});
@@ -780,7 +786,7 @@ function SecretFetcher(props: {
   onResult: (name: string, resource: KubeObject | null, error: ApiError | null) => void;
 }) {
   const { name, namespace, onResult } = props;
-  const [secret, error] = Secret.useGet(name, namespace);
+  const [secret, error] = useKubeGet(Secret, name, namespace);
 
   React.useEffect(() => {
     // Only call onResult when we have a definitive result (either data or error)
@@ -802,7 +808,7 @@ function ConfigMapFetcher(props: {
   onResult: (name: string, resource: KubeObject | null, error: ApiError | null) => void;
 }) {
   const { name, namespace, onResult } = props;
-  const [configMap, error] = ConfigMap.useGet(name, namespace);
+  const [configMap, error] = useKubeGet(ConfigMap, name, namespace);
 
   React.useEffect(() => {
     if (configMap || error) {
@@ -1722,8 +1728,8 @@ export function OwnedPodsSection(props: OwnedPodsSectionProps) {
     fieldSelector: undefined,
   };
 
-  const { items: pods, errors } = Pod.useList(queryData);
-  const { items: podMetrics } = PodMetrics.useList({
+  const { items: pods, errors } = useKubeList(Pod, queryData);
+  const { items: podMetrics } = useKubeList(PodMetrics, {
     ...podMetricsQueryData,
     refetchInterval: METRIC_REFETCH_INTERVAL_MS,
   });

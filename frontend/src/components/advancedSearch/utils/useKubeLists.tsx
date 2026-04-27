@@ -15,7 +15,7 @@
  */
 
 import { useEffect, useMemo, useState } from 'react';
-import { ResourceClasses } from '../../../lib/k8s';
+import { ResourceClasses, useKubeList } from '../../../lib/k8s';
 import { ApiError } from '../../../lib/k8s/api/v2/ApiError';
 import { ApiResource } from '../../../lib/k8s/api/v2/ApiResource';
 import { KubeObject, KubeObjectClass } from '../../../lib/k8s/cluster';
@@ -56,7 +56,7 @@ export const useKubeLists = (
   );
 
   const data = classes.map(it =>
-    it.useList({
+    useKubeList(it, {
       clusters,
       refetchInterval: refetchIntervalMs,
       namespace: namespaces ?? defaultNamespaces,

@@ -17,6 +17,7 @@
 import Grid from '@mui/material/Grid';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useKubeList } from '../../lib/k8s';
 import CronJob from '../../lib/k8s/cronJob';
 import DaemonSet from '../../lib/k8s/daemonSet';
 import Deployment from '../../lib/k8s/deployment';
@@ -37,13 +38,13 @@ interface WorkloadDict {
 }
 
 export default function Overview() {
-  const [pods] = Pod.useList();
-  const [deployments] = Deployment.useList();
-  const [statefulSets] = StatefulSet.useList();
-  const [daemonSets] = DaemonSet.useList();
-  const [replicaSets] = ReplicaSet.useList();
-  const [jobs] = Job.useList();
-  const [cronJobs] = CronJob.useList();
+  const [pods] = useKubeList(Pod);
+  const [deployments] = useKubeList(Deployment);
+  const [statefulSets] = useKubeList(StatefulSet);
+  const [daemonSets] = useKubeList(DaemonSet);
+  const [replicaSets] = useKubeList(ReplicaSet);
+  const [jobs] = useKubeList(Job);
+  const [cronJobs] = useKubeList(CronJob);
 
   const workloadsData: WorkloadDict = useMemo(
     () => ({

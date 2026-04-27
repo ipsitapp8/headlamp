@@ -20,6 +20,7 @@ import _ from 'lodash';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams } from 'react-router-dom';
+import { useKubeList } from '../../lib/k8s';
 import Endpoint from '../../lib/k8s/endpoints';
 import EndpointSlice from '../../lib/k8s/endpointSlices';
 import Service from '../../lib/k8s/service';
@@ -40,8 +41,8 @@ export default function ServiceDetails(props: {
   const { name = params.name, namespace = params.namespace, cluster } = props;
   const { t } = useTranslation(['glossary', 'translation']);
 
-  const [endpoints, endpointsError] = Endpoint.useList({ namespace, cluster });
-  const [endpointSlices, endpointSlicesError] = EndpointSlice.useList({ namespace, cluster });
+  const [endpoints, endpointsError] = useKubeList(Endpoint, { namespace, cluster });
+  const [endpointSlices, endpointSlicesError] = useKubeList(EndpointSlice, { namespace, cluster });
 
   function getOwnedEndpoints(item: Service) {
     return item ? endpoints?.filter(endpoint => endpoint.getName() === item.getName()) : null;

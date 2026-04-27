@@ -33,7 +33,7 @@ import { useDispatch } from 'react-redux';
 import { generatePath, useHistory, useLocation, useRouteMatch } from 'react-router';
 import { FixedSizeList } from 'react-window';
 import { loadClusterSettings } from '../../helpers/clusterSettings';
-import { useClustersConf, useSelectedClusters } from '../../lib/k8s';
+import { useClustersConf, useKubeList,useSelectedClusters } from '../../lib/k8s';
 import ConfigMap from '../../lib/k8s/configMap';
 import CronJob from '../../lib/k8s/cronJob';
 import Deployment from '../../lib/k8s/deployment';
@@ -111,7 +111,7 @@ const classes: KubeObjectClass[] = [
  */
 function useSearchResources() {
   const inACluster = useSelectedClusters().length > 0;
-  const results = classes.map(cls => cls.useList({ clusters: inACluster ? undefined : [] }));
+  const results = classes.map(cls => useKubeList(cls, { clusters: inACluster ? undefined : [] }));
 
   return useMemo(() => {
     return results.map((result, index) => {
