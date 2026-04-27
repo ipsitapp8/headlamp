@@ -55,23 +55,18 @@ export interface AuthVisibleProps extends React.PropsWithChildren<{}> {
  */
 export default function AuthVisible(props: AuthVisibleProps) {
   const { item, authVerb, subresource, namespace, onError, onAuthResult, children } = props;
-
-  if (!VALID_AUTH_VERBS.includes(authVerb)) {
-    console.warn(`Invalid authVerb provided: "${authVerb}". Skipping authorization check.`);
-    return null;
-  }
+  const isVerbValid = VALID_AUTH_VERBS.includes(authVerb);
 
   const itemClass: KubeObjectClass | null = (item as KubeObject)?._class?.() ?? item;
   const itemName = (item as KubeObject)?.getName?.();
 
-  // eslint-disable-next-line react-hooks/rules-of-hooks
   const { data } = useQuery<any>({
-    enabled: !!item,
+    enabled: !!item && isVerbValid,
     queryKey: [
       'authVisible',
       itemName,
-      itemClass.apiName,
-      itemClass.apiVersion,
+      itemClass?.apiName,
+      itemClass?.apiVersion,
       authVerb,
       subresource,
       namespace,
@@ -86,22 +81,26 @@ export default function AuthVisible(props: AuthVisibleProps) {
         return res;
       } catch (e: any) {
         onError?.(e);
+        return null;
       }
     },
   });
 
-  const visible = data?.status?.allowed ?? false;
-
-  // eslint-disable-next-line react-hooks/rules-of-hooks
   useEffect(() => {
     if (data) {
       onAuthResult?.({
-        allowed: visible,
+        allowed: data.status?.allowed ?? false,
         reason: data.status?.reason ?? '',
       });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [data]);
+  }, [data, onAuthResult]);
+
+  if (!isVerbValid) {
+    console.warn(`Invalid authVerb provided: "${authVerb}". Skipping authorization check.`);
+    return null;
+  }
+
+  const visible = data?.status?.allowed ?? false;
 
   if (!visible) {
     return null;

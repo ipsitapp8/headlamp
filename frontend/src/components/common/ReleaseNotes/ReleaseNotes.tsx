@@ -34,143 +34,156 @@ export default function ReleaseNotes() {
   const [fetchingRelease, setFetchingRelease] = React.useState<boolean>(false);
   const [releaseFetchFailed, setReleaseFetchFailed] = React.useState<boolean>(false);
   const [skipFetch, setSkipFetch] = React.useState(false);
+  const fetchedRef = React.useRef(false);
 
   // network controller this makes sure if the github request is still lying around we
   // abort it on fetch release skip press button click
-  const controller = new AbortController();
-  const signal = controller.signal;
+  const controllerRef = React.useRef(new AbortController());
 
   React.useEffect(() => {
-    if (desktopApi) {
-      desktopApi.receive(
-        'appConfig',
-        (config: { appVersion: string; checkForUpdates: boolean }) => {
-          const { appVersion: currentBuildAppVersion, checkForUpdates = true } = config;
-          if (!checkForUpdates) {
-            console.debug("Skipping update check because config's checkForUpdates is false");
-            return;
-          }
+    if (!desktopApi) {
+      return;
+    }
 
-          /**
-           * Fetches latest github release and sets the releaseNotes plus releaseDownloadURL.
-           *
-           * Also sets the following state whilst running:
-           * - fetchingRelease
-           * - releaseFetchFailed
-           * - skipFetch
-           */
-          async function fetchRelease() {
-            // attach a timeout which checks after 5 seconds of fetching release
-            // if the release request was not successful
-            const timeoutID = setTimeout(() => {
-              setFetchingRelease(true);
-            }, 5000);
+    const unsubscribe = desktopApi.receive(
+      'appConfig',
+      (config: { appVersion: string; checkForUpdates: boolean }) => {
+        const { appVersion: currentBuildAppVersion, checkForUpdates = true } = config;
+        if (!checkForUpdates) {
+          console.debug("Skipping update check because config's checkForUpdates is false");
+          return;
+        }
 
-            const githubReleaseURL = `https://api.github.com/repos/kinvolk/headlamp/releases`;
+        if (fetchedRef.current || fetchingRelease || skipFetch) {
+          return;
+        }
 
-            try {
-              // get all the releases -> default decreasing order of releases
-              const response = await fetch(githubReleaseURL, {
-                method: 'GET',
-                headers: {
-                  'Content-Type': 'application/json',
-                },
-                signal,
-              });
+        const isUpdateCheckingDisabled = JSON.parse(
+          localStorage.getItem('disable_update_check') || 'false'
+        );
 
-              if (!response.ok) {
-                throw new Error('Network response was not ok');
-              }
+        if (isUpdateCheckingDisabled) {
+          return;
+        }
 
-              type GithubRelease = {
-                name: string;
-                html_url: string;
-                body: string;
-              };
+        /**
+         * Fetches latest github release and sets the releaseNotes plus releaseDownloadURL.
+         */
+        async function fetchRelease() {
+          fetchedRef.current = true;
+          // attach a timeout which checks after 5 seconds of fetching release
+          // if the release request was not successful
+          const timeoutID = setTimeout(() => {
+            setFetchingRelease(true);
+          }, 5000);
 
-              const releases: GithubRelease[] = await response.json();
+          const githubReleaseURL = `https://api.github.com/repos/kinvolk/headlamp/releases`;
+          const signal = controllerRef.current.signal;
 
-              // Get the latest release that is not headlamp-plugin or headlamp-helm.
-              const latestRelease = releases.find(
-                release => !release.name?.startsWith('headlamp-')
-              );
+          try {
+            // get all the releases -> default decreasing order of releases
+            const response = await fetch(githubReleaseURL, {
+              method: 'GET',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              signal,
+            });
 
-              if (
-                latestRelease &&
-                semver.gt(latestRelease.name, currentBuildAppVersion) &&
-                !import.meta.env.FLATPAK_ID
-              ) {
-                setReleaseDownloadURL(latestRelease.html_url);
-              }
+            if (!response.ok) {
+              throw new Error('Network response was not ok');
+            }
 
-              // check if there is already a version in store, if it exists don't store the current version
-              // this check will help us later in determining whether we are on the latest release or not.
-              const storedAppVersion = getAppVersion();
-              let releaseNotes = '';
+            type GithubRelease = {
+              name: string;
+              html_url: string;
+              body: string;
+            };
 
-              if (storedAppVersion && semver.lt(storedAppVersion, currentBuildAppVersion)) {
-                // get the release notes for the version with which the app was built
-                const tagReleaseURL = `https://api.github.com/repos/kinvolk/headlamp/releases/tags/v${currentBuildAppVersion}`;
+            const releases: GithubRelease[] = await response.json();
 
-                try {
-                  const tagResponse = await fetch(tagReleaseURL, {
-                    method: 'GET',
-                    headers: {
-                      'Content-Type': 'application/json',
-                    },
-                    signal,
-                  });
+            // Get the latest release that is not headlamp-plugin or headlamp-helm.
+            const latestRelease = releases.find(release => !release.name?.startsWith('headlamp-'));
 
-                  if (!tagResponse.ok) {
-                    throw new Error('Network response was not ok');
-                  }
+            if (
+              latestRelease &&
+              semver.gt(latestRelease.name, currentBuildAppVersion) &&
+              !import.meta.env.FLATPAK_ID
+            ) {
+              setReleaseDownloadURL(latestRelease.html_url);
+            }
 
-                  const tagData = await tagResponse.json();
-                  const [notes] = tagData.body.split('<!-- end-release-notes -->');
-                  if (notes) {
-                    releaseNotes = notes;
-                  }
-                } catch (err) {
-                  setReleaseFetchFailed(true);
-                  console.error(
-                    `Error getting release notes for version ${currentBuildAppVersion}:`,
-                    err
-                  );
+            // check if there is already a version in store, if it exists don't store the current version
+            // this check will help us later in determining whether we are on the latest release or not.
+            const storedAppVersion = getAppVersion();
+            let releaseNotes = '';
+
+            if (storedAppVersion && semver.lt(storedAppVersion, currentBuildAppVersion)) {
+              // get the release notes for the version with which the app was built
+              const tagReleaseURL = `https://api.github.com/repos/kinvolk/headlamp/releases/tags/v${currentBuildAppVersion}`;
+
+              try {
+                const tagResponse = await fetch(tagReleaseURL, {
+                  method: 'GET',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                  signal,
+                });
+
+                if (!tagResponse.ok) {
+                  throw new Error('Network response was not ok');
                 }
+
+                const tagData = await tagResponse.json();
+                const [notes] = tagData.body.split('<!-- end-release-notes -->');
+                if (notes) {
+                  releaseNotes = notes;
+                }
+              } catch (err) {
+                setReleaseFetchFailed(true);
+                console.error(
+                  `Error getting release notes for version ${currentBuildAppVersion}:`,
+                  err
+                );
               }
+            }
 
-              // If all of the above was done before we need to warn the user, we don't need to warn them.
-              clearTimeout(timeoutID);
-              setFetchingRelease(false);
+            // If all of the above was done before we need to warn the user, we don't need to warn them.
+            clearTimeout(timeoutID);
+            setFetchingRelease(false);
 
-              // set the store version to the current so that we don't show release notes on
-              // every start of the app
-              setAppVersion(currentBuildAppVersion);
+            // set the store version to the current so that we don't show release notes on
+            // every start of the app
+            setAppVersion(currentBuildAppVersion);
 
-              // Calling this after setting the version above, so the release notes have the right version
-              // set when they show it.
-              if (releaseNotes) {
-                setReleaseNotes(releaseNotes);
-              }
-            } catch (error) {
+            // Calling this after setting the version above, so the release notes have the right version
+            // set when they show it.
+            if (releaseNotes) {
+              setReleaseNotes(releaseNotes);
+            }
+          } catch (error) {
+            if ((error as Error).name === 'AbortError') {
+              console.debug('Release fetch aborted');
+            } else {
               setReleaseFetchFailed(true);
               console.error('Failed to fetch release:', error);
-              clearTimeout(timeoutID);
-              setFetchingRelease(false);
             }
-          }
-
-          const isUpdateCheckingDisabled = JSON.parse(
-            localStorage.getItem('disable_update_check') || 'false'
-          );
-          if (!isUpdateCheckingDisabled && !fetchingRelease && !skipFetch) {
-            fetchRelease();
+            clearTimeout(timeoutID);
+            setFetchingRelease(false);
           }
         }
-      );
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [fetchingRelease, skipFetch]);
+
+        fetchRelease();
+      }
+    );
+
+    return () => {
+      if (typeof unsubscribe === 'function') {
+        unsubscribe();
+      }
+    };
+  }, [fetchingRelease, skipFetch, desktopApi]);
 
   React.useEffect(() => {
     desktopApi?.send('appConfig');
@@ -186,7 +199,7 @@ export default function ReleaseNotes() {
           releaseFetchFailed={releaseFetchFailed}
           skipUpdateHandler={() => {
             // abort the github release fetch
-            controller.abort();
+            controllerRef.current.abort();
             setSkipFetch(false);
             setFetchingRelease(false);
           }}
