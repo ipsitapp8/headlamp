@@ -33,9 +33,10 @@ function ConfigMapDataSection({ item }: { item: ConfigMap }) {
   const { t } = useTranslation(['translation']);
   const dispatch: AppDispatch = useDispatch();
 
-  const [data, setData] = React.useState(() => _.cloneDeep(item.data));
+  const [data, setData] = React.useState(() => _.cloneDeep(item.data || {}));
   const [isDirty, setIsDirty] = React.useState(false);
-  const lastDataRef = React.useRef(_.cloneDeep(item.data));
+  const lastDataRef = React.useRef(_.cloneDeep(item.data || {}));
+  const identityRef = React.useRef(item.metadata?.uid);
 
   const handleFieldChange = (key: string, newValue: string) => {
     setData(prev => ({ ...prev, [key]: newValue }));
@@ -43,12 +44,25 @@ function ConfigMapDataSection({ item }: { item: ConfigMap }) {
   };
 
   React.useEffect(() => {
-    const newData = _.cloneDeep(item.data);
+    const currentUid = item.metadata?.uid;
+    const newData = _.cloneDeep(item.data || {});
+
+    // If the ConfigMap identity changed (e.g. user navigated to a different one),
+    // we must fully reset the state regardless of dirty status.
+    if (identityRef.current !== currentUid) {
+      setData(newData);
+      lastDataRef.current = newData;
+      setIsDirty(false);
+      identityRef.current = currentUid;
+      return;
+    }
+
+    // Otherwise, if not dirty, sync with background updates from the same resource.
     if (!isDirty && !_.isEqual(newData, lastDataRef.current)) {
       setData(newData);
       lastDataRef.current = newData;
     }
-  }, [item.data, isDirty]);
+  }, [item.metadata?.uid, item.data, isDirty]);
 
   const handleSave = () => {
     const updatedConfigMap = { ...item.jsonData, data };
